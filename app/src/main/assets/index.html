@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#111827">
+<title>YACINE TV</title>
+<style>
+:root{color-scheme:dark;--bg:#090f1d;--panel:#151f32;--red:#e11d48;--muted:#9ca3af}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#fff;font-family:Arial,sans-serif}
+header{padding:14px 16px;background:#111827;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:3}
+.logo{font-size:22px;font-weight:800}.logo b{color:#fb355e}button,select,input{font:inherit}
+button{background:var(--red);color:white;border:0;border-radius:9px;padding:10px 13px;cursor:pointer}
+main{padding:12px;max-width:1100px;margin:auto}.player{background:#000;border-radius:12px;overflow:hidden}
+video{width:100%;aspect-ratio:16/9;display:block;background:#000}
+.status{padding:9px;color:#cbd5e1;font-size:13px;min-height:34px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+input,select{background:var(--panel);color:#fff;border:1px solid #334155;border-radius:9px;padding:11px;min-width:0}
+#search{flex:1;min-width:150px}.filters{display:flex;gap:8px;margin:10px 0}
+.filters select{flex:1;min-width:0}.count{color:var(--muted);font-size:13px;margin:10px 2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:9px}
+.channel{background:var(--panel);border:1px solid #26344b;border-radius:10px;padding:11px;text-align:right;min-height:76px;cursor:pointer}
+.channel:focus,.channel:hover{outline:2px solid var(--red)}.channel strong{display:block;font-size:14px;margin-bottom:7px}
+.channel small{color:var(--muted)}.empty{color:var(--muted);padding:25px;text-align:center}
+footer{color:var(--muted);font-size:12px;line-height:1.7;padding:18px 3px}
+@media(min-width:850px){main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,1fr);gap:14px}.playerArea{grid-column:1}.listArea{grid-column:2;grid-row:1/3}.player video{max-height:55vh}}
+</style>
+</head>
+<body>
+<header><div class="logo">🌐 YACINE <b>TV</b></div><button id="refresh">تحديث القنوات</button></header>
+<main>
+<section class="playerArea">
+ <div class="player"><video id="video" controls playsinline autoplay></video></div>
+ <div class="status" id="status" role="status">جارٍ تحميل قائمة القنوات...</div>
+ <div class="tools"><button id="stop">إيقاف المشغل</button><button id="reload">إعادة المحاولة</button></div>
+</section>
+<section class="listArea">
+ <div class="tools"><input id="search" placeholder="ابحث عن قناة أو دولة أو لغة"><select id="source"><option value="all">كل القنوات</option><option value="ma">المغرب</option><option value="fr">فرنسا</option><option value="ar">قنوات عربية</option></select></div>
+ <div class="filters"><select id="country"><option value="">كل الدول</option></select><select id="lang"><option value="">كل اللغات</option></select></div>
+ <div class="count" id="count">0 قناة</div><div class="grid" id="channels"><div class="empty">يتم البحث عن القنوات...</div></div>
+</section>
+<footer>القنوات المعروضة من قوائم IPTV العامة المتاحة قانونياً. توفر القناة وجودة بثها يعتمدان على مصدرها والاتصال بالإنترنت. قد لا تعمل بعض الروابط أو تتوقف لاحقاً. لا يتجاوز التطبيق اشتراكات أو تشفير مزودي الخدمة.</footer>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17"></script>
+<script>
+const PLAYLISTS={
+ all:'https://iptv-org.github.io/iptv/index.m3u',
+ ma:'https://iptv-org.github.io/iptv/countries/ma.m3u',
+ fr:'https://iptv-org.github.io/iptv/countries/fr.m3u',
+ ar:'https://iptv-org.github.io/iptv/languages/ara.m3u'
+};
+let allChannels=[],current=null,hls=null;
+const $=id=>document.getElementById(id);
+function say(t){$('status').textContent=t}
+function parseM3U(src){
+ const lines=src.split(/\r?\n/),out=[];let meta='';
+ for(const line of lines){if(line.startsWith('#EXTINF'))meta=line;else if(line.trim()&&!line.startsWith('#')&&meta){
+  const name=(meta.split(',').pop()||'قناة').trim();
+  const attr=k=>{const m=meta.match(new RegExp(k+'="([^"]*)"'));return m?m[1]:''};
+  out.push({name,url:line.trim(),country:attr('tvg-country'),language:attr('tvg-language'),group:attr('group-title'),logo:attr('tvg-logo')});meta='';
+ }}return out;
+}
+async function fetchList(key){
+ const r=await fetch(PLAYLISTS[key],{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);
+ return parseM3U(await r.text());
+}
+async function load(){
+ say('جارٍ البحث عن القنوات وتحديث القائمة...');
+ $('channels').innerHTML='<div class="empty">يرجى الانتظار...</div>';
+ const key=$('source').value;
+ try{
+  const keys=key==='all'?['all']: [key];
+  const lists=await Promise.all(keys.map(fetchList));
+  allChannels=lists.flat();
+  const seen=new Set();allChannels=allChannels.filter(c=>{if(seen.has(c.url))return false;seen.add(c.url);return true});
+  fillFilters();render();say('تم تحميل '+allChannels.length+' قناة. اختر قناة لبدء المشاهدة.');
+ }catch(e){say('تعذر جلب القائمة حالياً. تحقق من الإنترنت ثم اضغط تحديث. ('+e.message+')');$('channels').innerHTML='<div class="empty">لا توجد قائمة متاحة الآن.</div>'}
+}
+function fillFilters(){
+ const countries=[...new Set(allChannels.map(c=>c.country).filter(Boolean))].sort();
+ const langs=[...new Set(allChannels.map(c=>c.language).filter(Boolean))].sort();
+ $('country').innerHTML='<option value="">كل الدول</option>'+countries.map(x=>'<option></option>').join('');
+ [...$('country').options].slice(1).forEach((o,i)=>{o.value=countries[i];o.textContent=countries[i]});
+ $('lang').innerHTML='<option value="">كل اللغات</option>'+langs.map(x=>'<option></option>').join('');
+ [...$('lang').options].slice(1).forEach((o,i)=>{o.value=langs[i];o.textContent=langs[i]});
+}
+function render(){
+ const q=$('search').value.toLowerCase(),co=$('country').value,la=$('lang').value;
+ const list=allChannels.filter(c=>(!co||c.country===co)&&(!la||c.language===la)&&[c.name,c.country,c.language,c.group].join(' ').toLowerCase().includes(q));
+ $('count').textContent=list.length+' قناة';
+ $('channels').innerHTML='';
+ if(!list.length){$('channels').innerHTML='<div class="empty">لم يتم العثور على قنوات مطابقة.</div>';return}
+ const frag=document.createDocumentFragment();
+ list.slice(0,1500).forEach(c=>{
+  const b=document.createElement('button');b.className='channel';b.type='button';
+  const n=document.createElement('strong');n.textContent=c.name;
+  const s=document.createElement('small');s.textContent=[c.country,c.language].filter(Boolean).join(' • ')||c.group||'قناة';
+  b.append(n,s);b.addEventListener('click',()=>play(c));frag.appendChild(b);
+ });$('channels').appendChild(frag);
+}
+function play(c){
+ current=c;say('يتم تشغيل: '+c.name);
+ const v=$('video');if(hls){hls.destroy();hls=null}
+ v.pause();v.removeAttribute('src');v.load();
+ if(window.Hls&&Hls.isSupported()){
+  hls=new Hls({enableWorker:true,lowLatencyMode:false,maxBufferLength:20});
+  hls.loadSource(c.url);hls.attachMedia(v);
+  hls.on(Hls.Events.MANIFEST_PARSED,()=>v.play().catch(()=>say('اضغط زر التشغيل لبدء القناة.')));
+  hls.on(Hls.Events.ERROR,(e,d)=>{if(d.fatal)say('تعذر تشغيل هذه القناة. جرّب قناة أخرى أو أعد المحاولة.')});
+ }else if(v.canPlayType('application/vnd.apple.mpegurl')){v.src=c.url;v.play().catch(()=>say('اضغط زر التشغيل لبدء القناة.'))}
+ else{v.src=c.url;v.play().catch(()=>say('صيغة البث غير مدعومة في هذا الجهاز.'))}
+}
+$('refresh').onclick=load;$('reload').onclick=()=>current?play(current):load();
+$('stop').onclick=()=>{if(hls){hls.destroy();hls=null}$('video').pause();say('تم إيقاف المشغل.')};
+$('search').oninput=render;$('country').onchange=render;$('lang').onchange=render;$('source').onchange=load;
+load();setInterval(load,30*60*1000);
+</script>
+</body></html>
