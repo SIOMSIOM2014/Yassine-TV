@@ -41,10 +41,10 @@ footer{color:var(--muted);font-size:12px;line-height:1.7;padding:18px 3px}
 </section>
 <footer>القنوات المعروضة من قوائم IPTV العامة المتاحة قانونياً. توفر القناة وجودة بثها يعتمدان على مصدرها والاتصال بالإنترنت. قد لا تعمل بعض الروابط أو تتوقف لاحقاً. لا يتجاوز التطبيق اشتراكات أو تشفير مزودي الخدمة.</footer>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
 <script>
 const PLAYLISTS={
- all:'https://iptv-org.github.io/iptv/index.m3u',
+ all:'combined',
  ma:'https://iptv-org.github.io/iptv/countries/ma.m3u',
  fr:'https://iptv-org.github.io/iptv/countries/fr.m3u',
  ar:'https://iptv-org.github.io/iptv/languages/ara.m3u'
@@ -61,20 +61,27 @@ function parseM3U(src){
  }}return out;
 }
 async function fetchList(key){
- const r=await fetch(PLAYLISTS[key],{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);
- return parseM3U(await r.text());
+ const controller=new AbortController();
+ const timer=setTimeout(()=>controller.abort(),25000);
+ try{
+  const r=await fetch(PLAYLISTS[key],{cache:'no-store',signal:controller.signal});
+  if(!r.ok)throw Error('HTTP '+r.status);
+  return parseM3U(await r.text());
+ }finally{clearTimeout(timer)}
 }
 async function load(){
  say('جارٍ البحث عن القنوات وتحديث القائمة...');
  $('channels').innerHTML='<div class="empty">يرجى الانتظار...</div>';
  const key=$('source').value;
  try{
-  const keys=key==='all'?['all']: [key];
-  const lists=await Promise.all(keys.map(fetchList));
+  const keys=key==='all'?['ma','fr','ar']: [key];
+  const results=await Promise.allSettled(keys.map(fetchList));
+  const lists=results.filter(x=>x.status==='fulfilled').map(x=>x.value);
+  if(!lists.length)throw Error('تعذر الوصول إلى مصادر القنوات');
   allChannels=lists.flat();
   const seen=new Set();allChannels=allChannels.filter(c=>{if(seen.has(c.url))return false;seen.add(c.url);return true});
   fillFilters();render();say('تم تحميل '+allChannels.length+' قناة. اختر قناة لبدء المشاهدة.');
- }catch(e){say('تعذر جلب القائمة حالياً. تحقق من الإنترنت ثم اضغط تحديث. ('+e.message+')');$('channels').innerHTML='<div class="empty">لا توجد قائمة متاحة الآن.</div>'}
+ }catch(e){say('تعذر جلب القائمة حالياً. تحقق من الإنترنت ثم اضغط تحديث. ('+(e.name==='AbortError'?'انتهت مهلة الاتصال':e.message)+')');$('channels').innerHTML='<div class="empty">لا توجد قائمة متاحة الآن.</div>'}
 }
 function fillFilters(){
  const countries=[...new Set(allChannels.map(c=>c.country).filter(Boolean))].sort();
