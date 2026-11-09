@@ -61,7 +61,6 @@ class MainActivity : Activity() {
                                 instanceFollowRedirects = true
                                 setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 YACINE-TV")
                                 setRequestProperty("Accept", "application/x-mpegURL,text/plain,*/*")
-                                setRequestProperty("Accept-Encoding", "gzip")
                             }
                             if (connection.responseCode !in 200..299) continue
                             val text = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
