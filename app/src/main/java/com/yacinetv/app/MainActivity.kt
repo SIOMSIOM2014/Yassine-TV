@@ -16,9 +16,11 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import org.json.JSONObject
+import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 class MainActivity : Activity() {
     private var web: WebView? = null
@@ -27,34 +29,74 @@ class MainActivity : Activity() {
     private var previousOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
     private var previousSystemUi = 0
     private val network = Executors.newSingleThreadExecutor()
+    private val loading = AtomicBoolean(false)
+    private val cacheFile by lazy { File(filesDir, "playlist_cache.m3u") }
 
     inner class PlaylistBridge {
         @JavascriptInterface
         fun loadPlaylist() {
-            val prefs = getSharedPreferences("playlist_cache", MODE_PRIVATE)
-            val cached = prefs.getString("m3u", null)
-            if (!cached.isNullOrBlank()) sendPlaylist(cached, null, true)
+            if (cacheFile.exists() && cacheFile.length() > 0L) {
+                try { sendPlaylist(cacheFile.readText(Charsets.UTF_8), null, true) } catch (_: Exception) {}
+            }
+            if (!loading.compareAndSet(false, true)) return
             network.execute {
-                var connection: HttpURLConnection? = null
                 try {
-                    connection = (URL("https://iptv-org.github.io/iptv/index.country.m3u").openConnection() as HttpURLConnection).apply {
-                        connectTimeout = 12000
-                        readTimeout = 18000
-                        instanceFollowRedirects = true
-                        setRequestProperty("User-Agent", "YACINE-TV/1.0 Android")
-                        setRequestProperty("Accept", "text/plain,*/*")
-                        useCaches = true
+                    val sources = listOf(
+                        "https://iptv-org.github.io/iptv/index.country.m3u",
+                        "https://iptv-org.github.io/iptv/regions/arab.m3u",
+                        "https://iptv-org.github.io/iptv/languages/ara.m3u",
+                        "https://iptv-org.github.io/iptv/countries/ma.m3u",
+                        "https://iptv-org.github.io/iptv/countries/dz.m3u",
+                        "https://iptv-org.github.io/iptv/countries/tn.m3u"
+                    )
+                    val merged = StringBuilder("#EXTM3U\\n")
+                    val seen = HashSet<String>()
+                    var success = 0
+                    for (source in sources) {
+                        var connection: HttpURLConnection? = null
+                        try {
+                            connection = (URL(source).openConnection() as HttpURLConnection).apply {
+                                connectTimeout = 10000
+                                readTimeout = 15000
+                                instanceFollowRedirects = true
+                                setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 YACINE-TV")
+                                setRequestProperty("Accept", "application/x-mpegURL,text/plain,*/*")
+                                setRequestProperty("Accept-Encoding", "gzip")
+                            }
+                            if (connection.responseCode !in 200..299) continue
+                            val text = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+                            if (!text.contains("#EXTM3U") || !text.contains("#EXTINF")) continue
+                            var pending = ""
+                            for (line in text.lineSequence()) {
+                                val trimmed = line.trim()
+                                if (trimmed.startsWith("#EXTINF")) pending = trimmed
+                                else if (trimmed.startsWith("http") && pending.isNotEmpty()) {
+                                    if (seen.add(trimmed)) {
+                                        merged.append(pending).append('\\n').append(trimmed).append('\\n')
+                                    }
+                                    pending = ""
+                                }
+                            }
+                            success++
+                        } catch (_: Exception) {
+                            // Continue to the next independent public playlist.
+                        } finally {
+                            connection?.disconnect()
+                        }
                     }
-                    val code = connection.responseCode
-                    if (code !in 200..299) throw IllegalStateException("HTTP $code")
-                    val text = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
-                    if (text.isBlank()) throw IllegalStateException("القائمة فارغة")
-                    prefs.edit().putString("m3u", text).apply()
-                    sendPlaylist(text, null, false)
+                    if (success == 0 || seen.isEmpty()) {
+                        if (!cacheFile.exists() || cacheFile.length() == 0L)
+                            sendPlaylist(null, "لم نتمكن من الوصول إلى مصادر القنوات. تحقق من اتصال الإنترنت ثم أعد المحاولة.", false)
+                    } else {
+                        val result = merged.toString()
+                        cacheFile.writeText(result, Charsets.UTF_8)
+                        sendPlaylist(result, null, false)
+                    }
                 } catch (e: Exception) {
-                    if (cached.isNullOrBlank()) sendPlaylist(null, e.message ?: "Network error", false)
+                    if (!cacheFile.exists() || cacheFile.length() == 0L)
+                        sendPlaylist(null, e.message ?: "تعذر الاتصال بمصادر القنوات", false)
                 } finally {
-                    connection?.disconnect()
+                    loading.set(false)
                 }
             }
         }
