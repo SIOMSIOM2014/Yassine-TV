@@ -52,9 +52,6 @@ class MainActivity : Activity() {
                 "https://iptv-org.github.io/iptv/index.country.m3u",
                 "https://iptv-org.github.io/iptv/regions/arab.m3u",
                 "https://iptv-org.github.io/iptv/languages/ara.m3u",
-                "https://iptv-org.github.io/iptv/countries/ma.m3u",
-                "https://iptv-org.github.io/iptv/countries/dz.m3u",
-                "https://iptv-org.github.io/iptv/countries/tn.m3u"
             )
             val merged = StringBuilder("#EXTM3U\n")
             val seen = HashSet<String>()
@@ -77,7 +74,7 @@ class MainActivity : Activity() {
                                     if (line.startsWith("#EXTINF")) pending = line
                                     else if (line.startsWith("http") && pending.isNotEmpty()) {
                                         if (seen.add(line)) {
-                                            merged.append(pending).append('\\n').append(line).append('\\n')
+                                            merged.append(pending).append(10.toChar()).append(line).append(10.toChar())
                                             added++
                                         }
                                         pending = ""
@@ -107,8 +104,8 @@ class MainActivity : Activity() {
         var connection: HttpURLConnection? = null
         return try {
             connection = (URL(source).openConnection() as HttpURLConnection).apply {
-                connectTimeout = 7000
-                readTimeout = 9000
+                connectTimeout = 10000
+                readTimeout = 20000
                 instanceFollowRedirects = true
                 setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 YACINE-TV")
                 setRequestProperty("Accept", "application/x-mpegURL,text/plain,*/*")
