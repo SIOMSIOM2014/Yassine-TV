@@ -71,7 +71,7 @@ class MainActivity : Activity() {
                                 if (trimmed.startsWith("#EXTINF")) pending = trimmed
                                 else if (trimmed.startsWith("http") && pending.isNotEmpty()) {
                                     if (seen.add(trimmed)) {
-                                        merged.append(pending).append('\\n').append(trimmed).append('\\n')
+                                        merged.append(pending).append('\n').append(trimmed).append('\n')
                                     }
                                     pending = ""
                                 }
