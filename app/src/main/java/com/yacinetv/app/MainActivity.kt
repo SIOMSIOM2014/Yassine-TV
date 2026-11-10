@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.os.Bundle
+import android.util.DisplayMetrics
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
@@ -11,10 +12,15 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
 import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
@@ -24,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class MainActivity : Activity() {
     private var web: WebView? = null
+    private var bannerAd: AdView? = null
     private var fullscreenView: View? = null
     private var fullscreenCallback: WebChromeClient.CustomViewCallback? = null
     private var previousOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
@@ -71,7 +78,7 @@ class MainActivity : Activity() {
                                 if (trimmed.startsWith("#EXTINF")) pending = trimmed
                                 else if (trimmed.startsWith("http") && pending.isNotEmpty()) {
                                     if (seen.add(trimmed)) {
-                                        merged.append(pending).append('\n').append(trimmed).append('\n')
+                                        merged.append(pending).append('\\n').append(trimmed).append('\\n')
                                     }
                                     pending = ""
                                 }
@@ -108,7 +115,6 @@ class MainActivity : Activity() {
         }
     }
 
-    @Suppress("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -117,7 +123,6 @@ class MainActivity : Activity() {
         createWebView()
     }
 
-    @Suppress("SetJavaScriptEnabled")
     private fun createWebView() {
         val view = WebView(this)
         view.setBackgroundColor(Color.BLACK)
@@ -156,9 +161,30 @@ class MainActivity : Activity() {
             override fun onHideCustomView() { hideFullscreen() }
         }
         view.webViewClient = WebViewClient()
-        setContentView(view)
+
         web = view
+        val page = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.BLACK)
+            addView(view, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        }
+        setContentView(page)
         view.loadUrl("file:///android_asset/index.html")
+
+        // Official Google sample banner ID: test ads only; replace only after policy/consent setup.
+        val adView = AdView(this).apply {
+            adUnitId = "ca-app-pub-3940256099942544/9214589741"
+            val metrics = DisplayMetrics()
+            @Suppress("DEPRECATION")
+            windowManager.defaultDisplay.getMetrics(metrics)
+            val widthDp = (metrics.widthPixels / metrics.density).toInt().coerceAtLeast(320)
+            setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this@MainActivity, widthDp))
+        }
+        bannerAd = adView
+        page.addView(adView, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        MobileAds.initialize(this) {
+            runOnUiThread { adView.loadAd(AdRequest.Builder().build()) }
+        }
     }
 
     private fun hideFullscreen() {
@@ -169,6 +195,16 @@ class MainActivity : Activity() {
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         window.decorView.systemUiVisibility = previousSystemUi
         requestedOrientation = previousOrientation
+    }
+
+    override fun onResume() {
+        super.onResume()
+        bannerAd?.resume()
+    }
+
+    override fun onPause() {
+        bannerAd?.pause()
+        super.onPause()
     }
 
     @Suppress("DEPRECATION")
@@ -187,6 +223,8 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         if (fullscreenView != null) hideFullscreen()
+        bannerAd?.destroy()
+        bannerAd = null
         web?.apply { stopLoading(); loadUrl("about:blank"); clearHistory(); removeAllViews(); destroy() }
         web = null
         network.shutdownNow()
