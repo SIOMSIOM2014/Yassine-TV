@@ -10,7 +10,7 @@
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -15%,#202d47 0,#0b1120 42%,var(--bg) 78%);color:var(--white);font-family:Arial,Tahoma,sans-serif;min-height:100vh}
 button,input,select{font:inherit}button{cursor:pointer}
 .topbar{height:68px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;background:#0b111eeb;border-bottom:1px solid #ffffff12;position:sticky;top:0;z-index:10;backdrop-filter:blur(14px)}
-.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.3px;font-size:21px}.brandmark{width:39px;height:39px;border-radius:13px;background:linear-gradient(145deg,#ff4057,#b90e2c);display:grid;place-items:center;box-shadow:0 5px 18px #e11d483d;font-size:21px}.brand em{font-style:normal;color:#ff4057}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.3px;font-size:21px}.brandmark{width:44px;height:44px;flex:0 0 44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#172b49,#080d1b);border:1px solid #f5b93488;box-shadow:0 0 0 2px #ef233c22,0 6px 22px #e11d4850;overflow:hidden}.brandmark svg{width:100%;height:100%;display:block}.brand em{font-style:normal;color:#ff4057}
 .live-pill{display:flex;align-items:center;gap:7px;color:#ff6375;background:#ef233c18;border:1px solid #ef233c40;border-radius:30px;padding:8px 12px;font-size:12px;font-weight:800}.live-dot{width:7px;height:7px;background:#ff314b;border-radius:50%;box-shadow:0 0 10px #ff314b}
 main{max-width:1250px;margin:auto;padding:18px 16px 36px}
 .welcome{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:4px 0 16px}.welcome h1{font-size:20px;margin:0 0 5px}.welcome p{margin:0;color:var(--muted);font-size:13px}
@@ -39,7 +39,7 @@ main{max-width:1250px;margin:auto;padding:18px 16px 36px}
 </head>
 <body>
 <header class="topbar">
- <div class="brand"><span class="brandmark">▶</span><span>YACINE <em>TV</em></span></div>
+ <div class="brand"><span class="brandmark" aria-label="YACINE TV"><svg viewBox="0 0 100 100" role="img" aria-hidden="true"><defs><linearGradient id="orb" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1d8de0"/><stop offset="1" stop-color="#07152b"/></linearGradient><linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff1a8"/><stop offset="1" stop-color="#d89518"/></linearGradient></defs><circle cx="50" cy="51" r="43" fill="url(#orb)" stroke="#55c8ff" stroke-width="2"/><path d="M15 54a35 35 0 0 0 70 0" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2"/><path d="M18 31l15 9 4-20 14 16 15-16 4 20 15-9-7 25H25z" fill="url(#gold)" stroke="#8b5310" stroke-width="2"/><rect x="18" y="48" width="64" height="38" rx="9" fill="#e51d3b" stroke="#fff" stroke-width="2"/><rect x="24" y="54" width="52" height="26" rx="5" fill="#080d1b"/><path d="M43 58l21 9-21 10z" fill="#fff"/><path d="M27 91h46" stroke="#f5b934" stroke-width="4" stroke-linecap="round"/></svg></span><span>YACINE <em>TV</em></span></div>
  <div class="live-pill"><i class="live-dot"></i> بث مباشر</div>
 </header>
 <main>
