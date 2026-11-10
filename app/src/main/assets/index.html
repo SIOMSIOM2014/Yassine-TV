@@ -69,7 +69,7 @@ main{max-width:1250px;margin:auto;padding:18px 16px 36px}
 </main>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
 <script>
-const PLAYLIST_URL='https://iptv-org.github.io/iptv/index.country.m3u';
+const PLAYLIST_URLS=['https://iptv-org.github.io/iptv/index.country.m3u','https://iptv-org.github.io/iptv/regions/arab.m3u','https://iptv-org.github.io/iptv/languages/ara.m3u','https://iptv-org.github.io/iptv/countries/ma.m3u','https://iptv-org.github.io/iptv/countries/dz.m3u','https://iptv-org.github.io/iptv/countries/tn.m3u'];
 let allChannels=[],current=null,hls=null,activeCategory='';
 const $=id=>document.getElementById(id);
 function say(t){$('status').textContent=t}
@@ -81,7 +81,7 @@ function acceptPlaylist(src,isCached,error){if(error){if(!allChannels.length){sa
  fillCountries();render();say((isCached?'تم عرض القائمة المحفوظة سريعاً — ':'تم تحديث القنوات — ')+allChannels.length+' قناة.');if(loadTimer){clearTimeout(loadTimer);loadTimer=null}
 }
 window.nativePlaylistResult=(src,error,isCached)=>acceptPlaylist(src,isCached,error);
-async function fetchList(){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);try{const r=await fetch(PLAYLIST_URL,{cache:'force-cache',signal:controller.signal});if(!r.ok)throw Error('HTTP '+r.status);return await r.text()}finally{clearTimeout(timer)}}
+async function fetchList(){const results=await Promise.allSettled(PLAYLIST_URLS.map(async url=>{const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);try{const r=await fetch(url,{cache:'force-cache',signal:controller.signal});if(!r.ok)throw Error('HTTP '+r.status);return await r.text()}finally{clearTimeout(timer)}}));const seen=new Set(),parts=['#EXTM3U'];let good=0;for(const result of results){if(result.status!=='fulfilled')continue;const parsed=parseM3U(result.value);if(!parsed.length)continue;good++;for(const c of parsed){if(!seen.has(c.url)){seen.add(c.url);const attrs=[c.logo?'tvg-logo="'+c.logo+'"':'',c.country?'tvg-country="'+c.country+'"':'',c.language?'tvg-language="'+c.language+'"':'',c.group?'group-title="'+c.group+'"':''].filter(Boolean).join(' ');parts.push('#EXTINF:-1 '+attrs+','+c.name,c.url)}}}if(!good)throw Error('تعذر تحميل جميع مصادر القنوات');return parts.join('\n')}
 async function load(){const token=++loadToken;say('جارٍ البحث عن القنوات...');if(!allChannels.length)$('channels').innerHTML='<div class="empty">جارٍ جلب القنوات...</div>';
  if(window.AndroidBridge&&AndroidBridge.loadPlaylist){AndroidBridge.loadPlaylist();loadTimer=setTimeout(()=>{if(token===loadToken&&!allChannels.length){say('استغرق الاتصال أكثر من 15 ثانية. تحقق من الإنترنت ثم أعد المحاولة.');$('channels').innerHTML='<div class="empty">تعذر الوصول إلى مصدر القنوات حالياً.</div>'}},15000);return}
  try{const src=await fetchList();if(token===loadToken)acceptPlaylist(src,false,null)}catch(e){if(token===loadToken)acceptPlaylist('',false,'انتهت مهلة الاتصال أو تعذر الوصول إلى المصدر')}}
