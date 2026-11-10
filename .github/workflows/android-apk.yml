@@ -7,6 +7,7 @@ on:
       - 'app/**'
       - '*.gradle'
       - 'settings.gradle'
+      - 'gradle.properties'
       - '.github/workflows/android-apk.yml'
 
 jobs:
@@ -23,7 +24,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
+          gradle-version: '8.13'
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
       - name: Upload APK
