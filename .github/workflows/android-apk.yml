@@ -33,17 +33,17 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: YACINE-TV-debug-apk
+          name: YACINE-TV-v1.0.1-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
       - name: Publish public GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: YACINE TV v1.0.0
+          tag_name: v1.0.1
+          name: YACINE TV v1.0.1
           body: |
-            YACINE TV Android APK.
+            YACINE TV Android APK v1.0.1.
             Download app-debug.apk from the Assets section.
           files: app/build/outputs/apk/debug/app-debug.apk
           make_latest: true
