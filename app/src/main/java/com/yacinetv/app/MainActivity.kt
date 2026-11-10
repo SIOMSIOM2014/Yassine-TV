@@ -56,7 +56,7 @@ class MainActivity : Activity() {
                 "https://iptv-org.github.io/iptv/countries/dz.m3u",
                 "https://iptv-org.github.io/iptv/countries/tn.m3u"
             )
-            val merged = StringBuilder("#EXTM3U\\n")
+            val merged = StringBuilder("#EXTM3U\n")
             val seen = HashSet<String>()
             val completed = AtomicInteger(0)
             val validSources = AtomicInteger(0)
