@@ -27,6 +27,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.CompletableFuture
 
 class MainActivity : Activity() {
     private var web: WebView? = null
@@ -35,7 +37,7 @@ class MainActivity : Activity() {
     private var fullscreenCallback: WebChromeClient.CustomViewCallback? = null
     private var previousOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
     private var previousSystemUi = 0
-    private val network = Executors.newSingleThreadExecutor()
+    private val network = Executors.newFixedThreadPool(6)
     private val loading = AtomicBoolean(false)
     private val cacheFile by lazy { File(filesDir, "playlist_cache.m3u") }
 
@@ -46,65 +48,78 @@ class MainActivity : Activity() {
                 try { sendPlaylist(cacheFile.readText(Charsets.UTF_8), null, true) } catch (_: Exception) {}
             }
             if (!loading.compareAndSet(false, true)) return
-            network.execute {
-                try {
-                    val sources = listOf(
-                        "https://iptv-org.github.io/iptv/index.country.m3u",
-                        "https://iptv-org.github.io/iptv/regions/arab.m3u",
-                        "https://iptv-org.github.io/iptv/languages/ara.m3u",
-                        "https://iptv-org.github.io/iptv/countries/ma.m3u",
-                        "https://iptv-org.github.io/iptv/countries/dz.m3u",
-                        "https://iptv-org.github.io/iptv/countries/tn.m3u"
-                    )
-                    val merged = StringBuilder("#EXTM3U\n")
-                    val seen = HashSet<String>()
-                    var success = 0
-                    for (source in sources) {
-                        var connection: HttpURLConnection? = null
-                        try {
-                            connection = (URL(source).openConnection() as HttpURLConnection).apply {
-                                connectTimeout = 10000
-                                readTimeout = 15000
-                                instanceFollowRedirects = true
-                                setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 YACINE-TV")
-                                setRequestProperty("Accept", "application/x-mpegURL,text/plain,*/*")
-                            }
-                            if (connection.responseCode !in 200..299) continue
-                            val text = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
-                            if (!text.contains("#EXTM3U") || !text.contains("#EXTINF")) continue
-                            var pending = ""
-                            for (line in text.lineSequence()) {
-                                val trimmed = line.trim()
-                                if (trimmed.startsWith("#EXTINF")) pending = trimmed
-                                else if (trimmed.startsWith("http") && pending.isNotEmpty()) {
-                                    if (seen.add(trimmed)) {
-                                        merged.append(pending).append('\n').append(trimmed).append('\n')
+            val sources = listOf(
+                "https://iptv-org.github.io/iptv/index.country.m3u",
+                "https://iptv-org.github.io/iptv/regions/arab.m3u",
+                "https://iptv-org.github.io/iptv/languages/ara.m3u",
+                "https://iptv-org.github.io/iptv/countries/ma.m3u",
+                "https://iptv-org.github.io/iptv/countries/dz.m3u",
+                "https://iptv-org.github.io/iptv/countries/tn.m3u"
+            )
+            val merged = StringBuilder("#EXTM3U\\n")
+            val seen = HashSet<String>()
+            val completed = AtomicInteger(0)
+            val validSources = AtomicInteger(0)
+
+            // Download independent playlists in parallel: one reachable source is enough
+            // to populate the channel list while slower sources continue in the background.
+            for (source in sources) {
+                CompletableFuture.supplyAsync({
+                    downloadPlaylist(source)
+                }, network).whenComplete { playlist, failure ->
+                    if (failure == null && !playlist.isNullOrBlank()) {
+                        val entries = playlist.lineSequence().map { it.trim() }.toList()
+                        if (entries.any { it.startsWith("#EXTINF") }) {
+                            synchronized(merged) {
+                                var pending = ""
+                                var added = 0
+                                for (line in entries) {
+                                    if (line.startsWith("#EXTINF")) pending = line
+                                    else if (line.startsWith("http") && pending.isNotEmpty()) {
+                                        if (seen.add(line)) {
+                                            merged.append(pending).append('\\n').append(line).append('\\n')
+                                            added++
+                                        }
+                                        pending = ""
                                     }
-                                    pending = ""
+                                }
+                                if (added > 0) {
+                                    validSources.incrementAndGet()
+                                    val snapshot = merged.toString()
+                                    try { cacheFile.writeText(snapshot, Charsets.UTF_8) } catch (_: Exception) {}
+                                    sendPlaylist(snapshot, null, false)
                                 }
                             }
-                            success++
-                        } catch (_: Exception) {
-                            // Continue to the next independent public playlist.
-                        } finally {
-                            connection?.disconnect()
                         }
                     }
-                    if (success == 0 || seen.isEmpty()) {
-                        if (!cacheFile.exists() || cacheFile.length() == 0L)
-                            sendPlaylist(null, "لم نتمكن من الوصول إلى مصادر القنوات. تحقق من اتصال الإنترنت ثم أعد المحاولة.", false)
-                    } else {
-                        val result = merged.toString()
-                        cacheFile.writeText(result, Charsets.UTF_8)
-                        sendPlaylist(result, null, false)
+                    if (completed.incrementAndGet() == sources.size) {
+                        if (validSources.get() == 0 && (!cacheFile.exists() || cacheFile.length() == 0L)) {
+                            sendPlaylist(null, "تعذر الوصول إلى مصادر القنوات. تحقق من الشبكة أو جرّب لاحقاً.", false)
+                        }
+                        loading.set(false)
                     }
-                } catch (e: Exception) {
-                    if (!cacheFile.exists() || cacheFile.length() == 0L)
-                        sendPlaylist(null, e.message ?: "تعذر الاتصال بمصادر القنوات", false)
-                } finally {
-                    loading.set(false)
                 }
             }
+        }
+    }
+
+    private fun downloadPlaylist(source: String): String? {
+        var connection: HttpURLConnection? = null
+        return try {
+            connection = (URL(source).openConnection() as HttpURLConnection).apply {
+                connectTimeout = 7000
+                readTimeout = 9000
+                instanceFollowRedirects = true
+                setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 YACINE-TV")
+                setRequestProperty("Accept", "application/x-mpegURL,text/plain,*/*")
+            }
+            if (connection.responseCode !in 200..299) return null
+            connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+                .takeIf { it.contains("#EXTM3U") && it.contains("#EXTINF") }
+        } catch (_: Exception) {
+            null
+        } finally {
+            connection?.disconnect()
         }
     }
 
