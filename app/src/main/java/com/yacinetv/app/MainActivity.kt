@@ -56,7 +56,7 @@ class MainActivity : Activity() {
                         "https://iptv-org.github.io/iptv/countries/dz.m3u",
                         "https://iptv-org.github.io/iptv/countries/tn.m3u"
                     )
-                    val merged = StringBuilder("#EXTM3U\\n")
+                    val merged = StringBuilder("#EXTM3U\n")
                     val seen = HashSet<String>()
                     var success = 0
                     for (source in sources) {
@@ -78,7 +78,7 @@ class MainActivity : Activity() {
                                 if (trimmed.startsWith("#EXTINF")) pending = trimmed
                                 else if (trimmed.startsWith("http") && pending.isNotEmpty()) {
                                     if (seen.add(trimmed)) {
-                                        merged.append(pending).append('\\n').append(trimmed).append('\\n')
+                                        merged.append(pending).append('\n').append(trimmed).append('\n')
                                     }
                                     pending = ""
                                 }
