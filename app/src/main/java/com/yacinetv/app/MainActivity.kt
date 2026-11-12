@@ -42,11 +42,8 @@ class MainActivity : Activity() {
                 try { sendPlaylist(cacheFile.readText(Charsets.UTF_8), null, true) } catch (_: Exception) {}
             }
             if (!loading.compareAndSet(false, true)) return
-            val sources = listOf(
-                "https://iptv-org.github.io/iptv/index.country.m3u",
-                "https://iptv-org.github.io/iptv/regions/arab.m3u",
-                "https://iptv-org.github.io/iptv/languages/ara.m3u",
-            )
+            // One global playlist; country and language metadata drive in-app filters.
+            val sources = listOf("https://iptv-org.github.io/iptv/index.m3u")
             val merged = StringBuilder("#EXTM3U\n")
             val seen = HashSet<String>()
             val completed = AtomicInteger(0)
