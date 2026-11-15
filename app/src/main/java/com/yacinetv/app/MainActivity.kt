@@ -49,9 +49,12 @@ class MainActivity : Activity() {
             }
             if (!loading.compareAndSet(false, true)) return
             val sources = listOf(
-                "https://iptv-org.github.io/iptv/index.country.m3u",
+                "https://iptv-org.github.io/iptv/countries/ma.m3u",
                 "https://iptv-org.github.io/iptv/regions/arab.m3u",
                 "https://iptv-org.github.io/iptv/languages/ara.m3u",
+                "https://iptv-org.github.io/iptv/countries/dz.m3u",
+                "https://iptv-org.github.io/iptv/countries/tn.m3u",
+                "https://iptv-org.github.io/iptv/index.country.m3u",
             )
             val merged = StringBuilder("#EXTM3U\n")
             val seen = HashSet<String>()
@@ -109,6 +112,7 @@ class MainActivity : Activity() {
                 instanceFollowRedirects = true
                 setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 YACINE-TV")
                 setRequestProperty("Accept", "application/x-mpegURL,text/plain,*/*")
+                setRequestProperty("Accept-Encoding", "identity")
             }
             if (connection.responseCode !in 200..299) return null
             connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
