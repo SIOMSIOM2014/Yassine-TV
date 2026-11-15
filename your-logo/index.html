@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111111"><meta name="description" content="YOUR LOGO — بوابتك للترفيه والمعلومات">
+<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml">
+<title>YOUR LOGO</title>
+<style>
+:root{color-scheme:dark;--bg:#111;--panel:#1c1c1c;--muted:#aaa;--blue:#5aa4df;--line:#333}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#252525,#101010 48%);color:#f5f5f5;font-family:Arial,Tahoma,sans-serif;min-height:100vh}
+header{position:sticky;top:0;z-index:5;background:#111e;border-bottom:1px solid var(--line);backdrop-filter:blur(12px);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px}.logo{width:42px;height:42px;border-radius:13px;background:#eee;display:grid;place-items:center;color:#111;font-size:23px;font-weight:bold}.brand strong{display:block;letter-spacing:1px}.brand small{color:#999;font-size:10px}
+button,a{font:inherit}button{cursor:pointer}.topbtn,.action{background:#252525;color:#eee;border:1px solid #444;border-radius:11px;padding:10px 13px}
+main{max-width:920px;margin:auto;padding:16px 14px 42px}.hero{text-align:center;padding:28px 8px 22px}.hero h1{font-size:clamp(34px,8vw,54px);margin:0 0 7px;letter-spacing:2px}.hero p{color:#aaa;margin:0}
+.search{max-width:620px;margin:0 auto 26px;display:flex;gap:8px}.search input{flex:1;min-width:0;background:#242424;border:1px solid #444;border-radius:13px;padding:13px;color:white;font-size:16px}.search button{background:#397fb6;border:0;border-radius:13px;padding:0 17px;color:white}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px 16px;max-width:650px;margin:auto}.tilebtn{border:0;background:none;color:var(--blue);text-align:center;padding:0;font-size:clamp(13px,3.7vw,18px)}.tile{aspect-ratio:1;background:linear-gradient(145deg,#fafafa,#c8c8c8);color:#222;border-radius:22px;display:grid;place-items:center;font-size:clamp(40px,11vw,68px);box-shadow:0 3px 8px #0008;transition:transform .15s}.tilebtn:active .tile{transform:scale(.96)}.tilebtn span:last-child{display:block;margin-top:8px}
+.panel{display:none;max-width:760px;margin:22px auto 0;padding:18px;background:var(--panel);border:1px solid var(--line);border-radius:18px}.panel.show{display:block}.panel h2{margin:0 0 12px}.panel p{color:#bbb;line-height:1.7}.actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.actions a{color:#eee;text-decoration:none}.field{width:100%;padding:12px;margin:6px 0;background:#101010;color:white;border:1px solid #444;border-radius:10px}.player{width:100%;max-height:55vh;background:black;border-radius:12px}.hint{font-size:12px;color:#999}.back{margin-top:12px}.footer{text-align:center;color:#777;font-size:12px;padding:28px 5px}
+@media(min-width:650px){.grid{gap:28px 26px}.tile{border-radius:26px}}@media(max-width:360px){.grid{gap:16px 10px}.tile{border-radius:17px}}
+</style>
+</head>
+<body>
+<header><div class="brand"><div class="logo">▶</div><div><strong>YOUR LOGO</strong><small>ENTERTAINMENT & INFORMATION</small></div></div><button class="topbtn" onclick="home()">الرئيسية ⌂</button></header>
+<main>
+<section class="hero"><h1>YOUR LOGO</h1><p>بوابتك للترفيه والمعلومات في مكان واحد</p></section>
+<div class="search"><input id="q" placeholder="ابحث عن قسم..." oninput="filter()" aria-label="بحث"><button onclick="filter()">بحث</button></div>
+<section class="grid" id="grid"></section><section class="panel" id="panel" aria-live="polite"></section>
+<div class="footer">YOUR LOGO · موقع ويب قابل للتثبيت على الهاتف</div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+<script>
+const data=[
+['TV','📺','التلفزيون'],['Radio','📻','الراديو'],['Games','🎮','الألعاب'],['News','📰','الأخبار'],['SMS Temp.','📩','رسائل مؤقتة'],['SMS Receive.','📨','استقبال الرسائل'],['Search','🔎','البحث'],['Quiz','❓','مسابقة'],['قصص قصيرة','📚','قصص قصيرة'],['Tools','🌐','الأدوات'],['Extras','🖱️','إضافات'],['Matches','🏆','المباريات']
+];
+const grid=document.getElementById('grid'),panel=document.getElementById('panel');let hls=null,installPrompt=null;
+function render(items=data){grid.innerHTML='';items.forEach(x=>{const b=document.createElement('button');b.className='tilebtn';b.innerHTML='<span class="tile">'+x[1]+'</span><span>'+x[0]+'</span>';b.onclick=()=>open(x[0]);grid.appendChild(b)})}
+function filter(){const q=document.getElementById('q').value.toLowerCase();render(data.filter(x=>x.join(' ').toLowerCase().includes(q)))}
+function home(){panel.classList.remove('show');grid.style.display='grid';document.getElementById('q').value='';render()}
+function shell(title,body){grid.style.display='none';panel.innerHTML='<h2>'+title+'</h2>'+body+'<div class="actions"><button class="action" onclick="home()">العودة للرئيسية</button></div>';panel.classList.add('show');scrollTo({top:0,behavior:'smooth'})}
+function open(n){
+if(n==='TV'||n==='Radio'){shell(n==='TV'?'التلفزيون':'الراديو','<p>أدخل رابط بث مباشر تملك حق استخدامه. يدعم المشغل روابط HLS المتوافقة.</p><input class="field" id="url" dir="ltr" placeholder="https://example.com/stream.m3u8"><button class="action" onclick="play()">تشغيل</button><video id="vid" class="player" controls playsinline></video><p class="hint">قد تمنع بعض الخوادم التشغيل داخل المتصفح بسبب CORS أو قيود الوصول.</p>')}
+else if(n==='Search')shell('البحث','<div class="actions"><a class="action" target="_blank" rel="noopener" href="https://www.google.com/">Google</a><a class="action" target="_blank" rel="noopener" href="https://www.bing.com/">Bing</a></div>')
+else if(n==='Games')shell('الألعاب','<p>لعبة تخمين رقم من 1 إلى 10.</p><button class="action" onclick="game()">ابدأ اللعبة</button><p id="game"></p>')
+else if(n==='Quiz')shell('مسابقة','<p>ما عاصمة المغرب؟</p><div class="actions"><button class="action" onclick="answer(false)">الدار البيضاء</button><button class="action" onclick="answer(true)">الرباط</button><button class="action" onclick="answer(false)">مراكش</button></div><p id="ans"></p>')
+else if(n==='قصص قصيرة')shell('قصة قصيرة','<p>في قرية هادئة، وجد طفل مصباحاً قديماً. لم يكن سحرياً، لكنه أضاء طريقاً مظلماً، فقرر الطفل أن يشارك نوره مع جيرانه. ومنذ ذلك اليوم صار التعاون عادة القرية.</p>')
+else if(n==='News')shell('الأخبار','<p>مصادر إخبارية عامة:</p><div class="actions"><a class="action" target="_blank" rel="noopener" href="https://www.bbc.com/arabic">BBC عربي</a><a class="action" target="_blank" rel="noopener" href="https://snrtnews.com/">SNRT News</a></div>')
+else if(n==='Matches')shell('المباريات والنتائج','<p>تابع الجداول والنتائج من الجهات الرياضية الرسمية.</p><div class="actions"><a class="action" target="_blank" rel="noopener" href="https://www.fifa.com/">FIFA</a><a class="action" target="_blank" rel="noopener" href="https://www.cafonline.com/">CAF</a><a class="action" target="_blank" rel="noopener" href="https://www.uefa.com/">UEFA</a></div>')
+else if(n==='SMS Temp.'||n==='SMS Receive.')shell(n,'<p>واجهة ربط مزود خدمة رسائل معتمد. هذه الخدمة غير مفعلة حتى اختيار مزود وإعداد حسابه وواجهته البرمجية.</p>')
+else if(n==='Tools')shell('الأدوات','<div class="actions"><a class="action" target="_blank" rel="noopener" href="https://translate.google.com/">الترجمة</a><a class="action" target="_blank" rel="noopener" href="https://www.speedtest.net/">اختبار سرعة الإنترنت</a></div>')
+else shell('الإضافات والإعدادات','<div class="actions"><button class="action" onclick="share()">مشاركة الموقع</button><button class="action" onclick="install()">تثبيت على الهاتف</button><a class="action" target="_blank" rel="noopener" href="https://www.videolan.org/vlc/">معلومات VLC</a><a class="action" target="_blank" rel="noopener" href="https://www.twitch.tv/">Twitch الرسمي</a></div><p class="hint">الموقع لا يوفّر اشتراكات قنوات ولا يستخرج روابط بث خاصة أو يتجاوز شروط المنصات.</p>');
+}
+function play(){const u=document.getElementById('url').value.trim(),v=document.getElementById('vid');if(!/^https:\/\//i.test(u)){alert('أدخل رابط HTTPS صحيحاً');return}if(hls){hls.destroy();hls=null}if(window.Hls&&Hls.isSupported()&&/\.m3u8($|\?)/i.test(u)){hls=new Hls();hls.loadSource(u);hls.attachMedia(v);hls.on(Hls.Events.MANIFEST_PARSED,()=>v.play().catch(()=>{}))}else{v.src=u;v.play().catch(()=>alert('تعذر التشغيل؛ تحقق من الرابط والتوافق'))}}
+function game(){const n=1+Math.floor(Math.random()*10),g=document.getElementById('game'),a=prompt('اختر رقماً من 1 إلى 10');g.textContent=Number(a)===n?'أحسنت!':'كان الرقم '+n}
+function answer(ok){document.getElementById('ans').textContent=ok?'إجابة صحيحة!':'حاول مرة أخرى.'}
+function share(){if(navigator.share)navigator.share({title:'YOUR LOGO',url:location.href}).catch(()=>{});else alert(location.href)}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e});
+async function install(){if(installPrompt){installPrompt.prompt();installPrompt=null}else alert('من قائمة Chrome اختر: إضافة إلى الشاشة الرئيسية أو تثبيت التطبيق')}
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+render();
+</script>
+</body></html>
