@@ -111,7 +111,7 @@ function playTVChannel(channel){
  const video=document.getElementById('tvVideo'),now=document.getElementById('tvNow');if(!video)return;
  if(hls){hls.destroy();hls=null;}video.pause();video.removeAttribute('src');video.load();activeChannelUrl=channel.url;
  now.textContent='جارٍ تشغيل: '+channel.name;
- if(window.Hls&&Hls.isSupported()&&/\\.m3u8(?:$|\\?)/i.test(channel.url)){
+ if(window.Hls&&Hls.isSupported()&&/\.m3u8(?:$|\?)/i.test(channel.url)){
   hls=new Hls({enableWorker:true,lowLatencyMode:false});hls.loadSource(channel.url);hls.attachMedia(video);
   hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{now.textContent='اضغط زر التشغيل داخل المشغل لإكمال التشغيل.'}));
   hls.on(Hls.Events.ERROR,(_event,data)=>{if(data.fatal)now.textContent='تعذر تشغيل هذا البث داخل التطبيق؛ قد يكون الرابط متوقفاً أو يمنع التشغيل المضمّن.'});
