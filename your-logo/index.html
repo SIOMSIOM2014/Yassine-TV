@@ -61,7 +61,7 @@ function showTV(){
  <div id="tvList" class="tv-list"></div>
  <p class="hint">تُعرض القنوات من قائمة عامة. تشغيل كل قناة يتوقف على توفر البث، وحقوق الناشر، ودعم المتصفح/الشبكة. بعض القنوات قد لا تعمل في كل البلدان.</p>
  </div>`);
- loadTVPlaylist(false);
+ loadTVPlaylist(true);
 }
 function parseTVPlaylist(text){
  const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/),items=[];let meta=null;
@@ -77,7 +77,15 @@ function parseTVPlaylist(text){
    meta=null;
   }
  }
- return items;
+ // استبعاد القنوات المغربية من القائمة العامة حسب الدولة ومعرّف القناة.
+ return items.filter(c=>{
+  const country=(c.country||'').toLocaleLowerCase();
+  const id=(c.id||'').toLocaleLowerCase();
+  const name=(c.name||'').toLocaleLowerCase();
+  return !/(^|[^a-z])(morocco|maroc)([^a-z]|$)|المغرب/.test(country)
+   && !/\\.ma(?:@|$)/i.test(id)
+   && !/(^|[^a-z])morocco([^a-z]|$)|المغرب/.test(name);
+ });
 }
 async function loadTVPlaylist(force){
  const status=document.getElementById('tvStatus');
@@ -129,6 +137,5 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installProm
 async function install(){if(installPrompt){installPrompt.prompt();installPrompt=null}else alert('من قائمة Chrome اختر: إضافة إلى الشاشة الرئيسية أو تثبيت التطبيق')}
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 render();
-loadTVPlaylist(false);
 </script>
 </body></html>
