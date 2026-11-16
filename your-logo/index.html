@@ -15,7 +15,7 @@ main{max-width:920px;margin:auto;padding:16px 14px 42px}.hero{text-align:center;
 .search{max-width:620px;margin:0 auto 26px;display:flex;gap:8px}.search input{flex:1;min-width:0;background:#242424;border:1px solid #444;border-radius:13px;padding:13px;color:white;font-size:16px}.search button{background:#397fb6;border:0;border-radius:13px;padding:0 17px;color:white}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px 16px;max-width:650px;margin:auto}.tilebtn{border:0;background:none;color:var(--blue);text-align:center;padding:0;font-size:clamp(13px,3.7vw,18px)}.tile{aspect-ratio:1;background:linear-gradient(145deg,#fafafa,#c8c8c8);color:#222;border-radius:22px;display:grid;place-items:center;font-size:clamp(40px,11vw,68px);box-shadow:0 3px 8px #0008;transition:transform .15s}.tilebtn:active .tile{transform:scale(.96)}.tilebtn span:last-child{display:block;margin-top:8px}
 .panel{display:none;max-width:760px;margin:22px auto 0;padding:18px;background:var(--panel);border:1px solid var(--line);border-radius:18px}.panel.show{display:block}.panel h2{margin:0 0 12px}.panel p{color:#bbb;line-height:1.7}.actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.actions a{color:#eee;text-decoration:none}.field{width:100%;padding:12px;margin:6px 0;background:#101010;color:white;border:1px solid #444;border-radius:10px}.player{width:100%;max-height:55vh;background:black;border-radius:12px}.hint{font-size:12px;color:#999}.back{margin-top:12px}.footer{text-align:center;color:#777;font-size:12px;padding:28px 5px}
-@media(min-width:650px){.grid{gap:28px 26px}.tile{border-radius:26px}}@media(max-width:360px){.grid{gap:16px 10px}.tile{border-radius:17px}}
+.tv-wrap{display:grid;gap:12px}.tv-search{width:100%;padding:12px;background:#101010;color:#fff;border:1px solid #444;border-radius:10px}.tv-status{font-size:13px;color:#bbb;min-height:20px}.tv-list{display:grid;gap:7px;max-height:48vh;overflow:auto}.tv-channel{display:flex;align-items:center;gap:10px;width:100%;text-align:right;background:#111;border:1px solid #383838;color:#eee;border-radius:11px;padding:9px}.tv-channel img{width:42px;height:42px;object-fit:contain;background:#eee;border-radius:8px}.tv-channel .meta{min-width:0;flex:1}.tv-channel strong{display:block;overflow-wrap:anywhere}.tv-channel small{color:#aaa}.tv-channel.active{border-color:#5aa4df;background:#182633}.tv-video{width:100%;aspect-ratio:16/9;max-height:52vh;background:#000;border-radius:12px}.tv-tools{display:flex;gap:8px;flex-wrap:wrap}.tv-tools button{background:#252525;color:#eee;border:1px solid #444;border-radius:9px;padding:9px 12px}\n@media(min-width:650px){.grid{gap:28px 26px}.tile{border-radius:26px}}@media(max-width:360px){.grid{gap:16px 10px}.tile{border-radius:17px}}
 </style>
 </head>
 <body>
@@ -37,7 +37,7 @@ function filter(){const q=document.getElementById('q').value.toLowerCase();rende
 function home(){panel.classList.remove('show');grid.style.display='grid';document.getElementById('q').value='';render()}
 function shell(title,body){grid.style.display='none';panel.innerHTML='<h2>'+title+'</h2>'+body+'<div class="actions"><button class="action" onclick="home()">العودة للرئيسية</button></div>';panel.classList.add('show');scrollTo({top:0,behavior:'smooth'})}
 function open(n){
-if(n==='TV'){shell('القنوات التلفزيونية المغربية','<p>اختر القناة لفتح صفحة البث الرسمية التابعة للجهة الناشرة. قد تختلف الإتاحة حسب البلد وحقوق البث.</p><div class="actions"><a class="action" target="_self" rel="noopener" href="https://snrtlive.ma/ar">SNRT Live · جميع قنوات SNRT</a><a class="action" target="_self" rel="noopener" href="https://www.medi1tv.com/">Medi1 TV</a><a class="action" target="_self" rel="noopener" href="https://www.2m.ma/">2M</a></div><h3>قنوات SNRT</h3><div class="actions"><a class="action" target="_self" rel="noopener" href="https://snrtlive.ma/ar/al-aoula">الأولى</a><a class="action" target="_self" rel="noopener" href="https://snrtlive.ma/ar/laayoune">العيون</a><a class="action" target="_self" rel="noopener" href="https://snrtlive.ma/ar/arryadia">الرياضية</a><a class="action" target="_self" rel="noopener" href="https://snrtlive.ma/ar/tamazight">تمازيغت</a><a class="action" target="_self" rel="noopener" href="https://snrtlive.ma/ar/almaghribia">المغربية</a><a class="action" target="_self" rel="noopener" href="https://snrtlive.ma/ar/assadissa">السادسة</a><a class="action" target="_self" rel="noopener" href="https://snrtlive.ma/ar/athaqafia">الثقافية</a><a class="action" target="_self" rel="noopener" href="https://snrtlive.ma/ar/aflam-tv">أفلام TV</a></div><p class="hint">هذه روابط للصفحات الرسمية وليست روابط بث مستخرجة. إذا لم تعمل قناة في بلدك، استخدم تطبيق SNRT Live الرسمي أو راجع الناشر.</p>')}
+if(n==='TV'){showTV()}
 else if(n==='Radio'){shell('الراديو','<p>استمع عبر صفحات الجهات الرسمية:</p><div class="actions"><a class="action" target="_self" rel="noopener" href="https://snrtlive.ma/ar">SNRT Live · الإذاعات الوطنية والجهوية</a><a class="action" target="_self" rel="noopener" href="https://www.medi1radio.com/">Medi1 Radio</a></div>')}
 else if(n==='Search')shell('البحث','<div class="actions"><a class="action" target="_self" rel="noopener" href="https://www.google.com/">Google</a><a class="action" target="_self" rel="noopener" href="https://www.bing.com/">Bing</a></div>')
 else if(n==='Games')shell('الألعاب','<p>لعبة تخمين رقم من 1 إلى 10.</p><button class="action" onclick="game()">ابدأ اللعبة</button><p id="game"></p>')
@@ -49,7 +49,76 @@ else if(n==='SMS Temp.'||n==='SMS Receive.')shell(n,'<p>واجهة ربط مزو
 else if(n==='Tools')shell('الأدوات','<div class="actions"><a class="action" target="_self" rel="noopener" href="https://translate.google.com/">الترجمة</a><a class="action" target="_self" rel="noopener" href="https://www.speedtest.net/">اختبار سرعة الإنترنت</a></div>')
 else shell('الإضافات والإعدادات','<div class="actions"><button class="action" onclick="share()">مشاركة الموقع</button><button class="action" onclick="install()">تثبيت على الهاتف</button><a class="action" target="_self" rel="noopener" href="https://www.videolan.org/vlc/">معلومات VLC</a><a class="action" target="_self" rel="noopener" href="https://www.twitch.tv/">Twitch الرسمي</a></div><p class="hint">الموقع لا يوفّر اشتراكات قنوات ولا يستخرج روابط بث خاصة أو يتجاوز شروط المنصات.</p>');
 }
-function play(){const u=document.getElementById('url').value.trim(),v=document.getElementById('vid');if(!/^https:\/\//i.test(u)){alert('أدخل رابط HTTPS صحيحاً');return}if(hls){hls.destroy();hls=null}if(window.Hls&&Hls.isSupported()&&/\.m3u8($|\?)/i.test(u)){hls=new Hls();hls.loadSource(u);hls.attachMedia(v);hls.on(Hls.Events.MANIFEST_PARSED,()=>v.play().catch(()=>{}))}else{v.src=u;v.play().catch(()=>alert('تعذر التشغيل؛ تحقق من الرابط والتوافق'))}}
+let tvChannels=[],activeChannelUrl='';
+const PLAYLIST_URL='https://iptv-org.github.io/iptv/index.country.m3u';
+function showTV(){
+ shell('قنوات العالم',`<div class="tv-wrap">
+ <video id="tvVideo" class="tv-video" controls playsinline webkit-playsinline preload="none"></video>
+ <div id="tvNow" class="tv-status">اختر قناة من القائمة لبدء التشغيل داخل التطبيق.</div>
+ <input id="tvSearch" class="tv-search" type="search" placeholder="ابحث باسم القناة أو الدولة..." oninput="renderTVChannels()" aria-label="البحث عن قناة">
+ <div class="tv-tools"><button onclick="loadTVPlaylist(true)">تحديث قائمة القنوات</button><span class="hint">المصدر: IPTV-org · القائمة حسب الدولة</span></div>
+ <div id="tvStatus" class="tv-status">جارٍ تحميل قائمة القنوات...</div>
+ <div id="tvList" class="tv-list"></div>
+ <p class="hint">تُعرض القنوات من قائمة عامة. تشغيل كل قناة يتوقف على توفر البث، وحقوق الناشر، ودعم المتصفح/الشبكة. بعض القنوات قد لا تعمل في كل البلدان.</p>
+ </div>`);
+ loadTVPlaylist(false);
+}
+function parseTVPlaylist(text){
+ const lines=text.replace(/^\\uFEFF/,'').split(/\\r?\\n/),items=[];let meta=null;
+ for(const raw of lines){const line=raw.trim();if(!line)continue;
+  if(line.startsWith('#EXTINF:')){
+   const comma=line.indexOf(','),attrs=comma>=0?line.slice(0,comma):line,name=comma>=0?line.slice(comma+1).trim():'قناة بدون اسم';
+   const get=k=>{const m=attrs.match(new RegExp('(?:^|\\\\s)'+k+'="([^"]*)"','i'));return m?m[1]:''};
+   meta={name:name||get('tvg-name')||'قناة بدون اسم',logo:get('tvg-logo'),country:get('group-title')||get('tvg-country')||'',id:get('tvg-id')};
+  }else if(!line.startsWith('#')&&meta){
+   if(/^https:\\/\\//i.test(line)){items.push({...meta,url:line});}
+   meta=null;
+  }
+ }
+ return items;
+}
+async function loadTVPlaylist(force){
+ const status=document.getElementById('tvStatus');if(!status)return;
+ status.textContent='جارٍ جلب أحدث قائمة القنوات...';
+ try{
+  const response=await fetch(PLAYLIST_URL,{cache:force?'reload':'no-store'});
+  if(!response.ok)throw new Error('HTTP '+response.status);
+  const raw=await response.text(),parsed=parseTVPlaylist(raw);
+  if(!parsed.length)throw new Error('لم يتم العثور على قنوات صالحة في القائمة');
+  tvChannels=parsed;status.textContent='تم تحميل '+parsed.length+' قناة. اختر قناة للتشغيل.';
+  renderTVChannels();
+ }catch(e){status.textContent='تعذر تحميل القائمة الآن. تحقق من الاتصال أو أعد المحاولة. ('+e.message+')';}
+}
+function renderTVChannels(){
+ const list=document.getElementById('tvList'),search=document.getElementById('tvSearch');if(!list)return;
+ const term=(search?.value||'').trim().toLocaleLowerCase();
+ const filtered=tvChannels.filter(c=>(c.name+' '+c.country+' '+c.id).toLocaleLowerCase().includes(term));
+ list.innerHTML='';
+ if(!filtered.length){list.textContent=tvChannels.length?'لا توجد نتائج مطابقة.':'القائمة فارغة.';return;}
+ const frag=document.createDocumentFragment();
+ filtered.forEach(c=>{
+  const btn=document.createElement('button');btn.type='button';btn.className='tv-channel'+(c.url===activeChannelUrl?' active':'');
+  if(c.logo){const img=document.createElement('img');img.loading='lazy';img.referrerPolicy='no-referrer';img.src=c.logo;img.alt='';img.onerror=()=>img.remove();btn.appendChild(img)}
+  const meta=document.createElement('span');meta.className='meta';
+  const name=document.createElement('strong');name.textContent=c.name;
+  const country=document.createElement('small');country.textContent=c.country||'دولي';
+  meta.append(name,country);btn.appendChild(meta);btn.onclick=()=>playTVChannel(c);frag.appendChild(btn);
+ });list.appendChild(frag);
+}
+function playTVChannel(channel){
+ const video=document.getElementById('tvVideo'),now=document.getElementById('tvNow');if(!video)return;
+ if(hls){hls.destroy();hls=null;}video.pause();video.removeAttribute('src');video.load();activeChannelUrl=channel.url;
+ now.textContent='جارٍ تشغيل: '+channel.name;
+ if(window.Hls&&Hls.isSupported()&&/\\.m3u8(?:$|\\?)/i.test(channel.url)){
+  hls=new Hls({enableWorker:true,lowLatencyMode:false});hls.loadSource(channel.url);hls.attachMedia(video);
+  hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{now.textContent='اضغط زر التشغيل داخل المشغل لإكمال التشغيل.'}));
+  hls.on(Hls.Events.ERROR,(_event,data)=>{if(data.fatal)now.textContent='تعذر تشغيل هذا البث داخل التطبيق؛ قد يكون الرابط متوقفاً أو يمنع التشغيل المضمّن.'});
+ }else{
+  video.src=channel.url;video.play().catch(()=>{now.textContent='تعذر التشغيل التلقائي. اضغط تشغيل، أو جرّب قناة أخرى.'});
+ }
+ renderTVChannels();
+}
+
 function game(){const n=1+Math.floor(Math.random()*10),g=document.getElementById('game'),a=prompt('اختر رقماً من 1 إلى 10');g.textContent=Number(a)===n?'أحسنت!':'كان الرقم '+n}
 function answer(ok){document.getElementById('ans').textContent=ok?'إجابة صحيحة!':'حاول مرة أخرى.'}
 function share(){if(navigator.share)navigator.share({title:'YOUR LOGO',url:location.href}).catch(()=>{});else alert(location.href)}
