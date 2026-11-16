@@ -64,14 +64,16 @@ function showTV(){
  loadTVPlaylist(false);
 }
 function parseTVPlaylist(text){
- const lines=text.replace(/^\\uFEFF/,'').split(/\\r?\\n/),items=[];let meta=null;
- for(const raw of lines){const line=raw.trim();if(!line)continue;
+ const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/),items=[];let meta=null;
+ for(const raw of lines){
+  const line=raw.trim();if(!line)continue;
   if(line.startsWith('#EXTINF:')){
-   const comma=line.indexOf(','),attrs=comma>=0?line.slice(0,comma):line,name=comma>=0?line.slice(comma+1).trim():'قناة بدون اسم';
-   const get=k=>{const m=attrs.match(new RegExp('(?:^|\\\\s)'+k+'="([^"]*)"','i'));return m?m[1]:''};
+   const comma=line.indexOf(','),attrs=comma>=0?line.slice(0,comma):line;
+   const name=comma>=0?line.slice(comma+1).trim():'قناة بدون اسم';
+   const get=k=>{const m=attrs.match(new RegExp(k+'="([^"]*)"','i'));return m?m[1]:''};
    meta={name:name||get('tvg-name')||'قناة بدون اسم',logo:get('tvg-logo'),country:get('group-title')||get('tvg-country')||'',id:get('tvg-id')};
   }else if(!line.startsWith('#')&&meta){
-   if(/^https:\\/\\//i.test(line)){items.push({...meta,url:line});}
+   if(/^https:\/\//i.test(line))items.push({...meta,url:line});
    meta=null;
   }
  }
