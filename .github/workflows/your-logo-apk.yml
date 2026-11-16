@@ -6,10 +6,8 @@ on:
     branches: [ main ]
     paths:
       - 'yourlogo/**'
-      - 'your-logo/**'
       - 'settings.gradle'
       - 'build.gradle'
-      - '.github/workflows/your-logo-apk.yml'
 
 permissions:
   contents: write
