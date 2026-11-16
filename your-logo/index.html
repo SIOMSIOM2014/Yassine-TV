@@ -80,16 +80,17 @@ function parseTVPlaylist(text){
  return items;
 }
 async function loadTVPlaylist(force){
- const status=document.getElementById('tvStatus');if(!status)return;
- status.textContent='جارٍ جلب أحدث قائمة القنوات...';
+ const status=document.getElementById('tvStatus');
+ if(tvChannels.length&&!force){if(status)status.textContent='تم تحميل '+tvChannels.length+' قناة. اختر قناة للتشغيل.';renderTVChannels();return;}
+ if(status)status.textContent='جارٍ جلب أحدث قائمة القنوات...';
  try{
   const response=await fetch(PLAYLIST_URL,{cache:force?'reload':'no-store'});
   if(!response.ok)throw new Error('HTTP '+response.status);
   const raw=await response.text(),parsed=parseTVPlaylist(raw);
   if(!parsed.length)throw new Error('لم يتم العثور على قنوات صالحة في القائمة');
-  tvChannels=parsed;status.textContent='تم تحميل '+parsed.length+' قناة. اختر قناة للتشغيل.';
+  tvChannels=parsed;if(status)status.textContent='تم تحميل '+parsed.length+' قناة. اختر قناة للتشغيل.';
   renderTVChannels();
- }catch(e){status.textContent='تعذر تحميل القائمة الآن. تحقق من الاتصال أو أعد المحاولة. ('+e.message+')';}
+ }catch(e){if(status)status.textContent='تعذر تحميل القائمة الآن. تحقق من الاتصال أو أعد المحاولة. ('+e.message+')';}
 }
 function renderTVChannels(){
  const list=document.getElementById('tvList'),search=document.getElementById('tvSearch');if(!list)return;
@@ -128,5 +129,6 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installProm
 async function install(){if(installPrompt){installPrompt.prompt();installPrompt=null}else alert('من قائمة Chrome اختر: إضافة إلى الشاشة الرئيسية أو تثبيت التطبيق')}
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 render();
+loadTVPlaylist(false);
 </script>
 </body></html>
