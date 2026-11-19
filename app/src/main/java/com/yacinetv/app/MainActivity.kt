@@ -105,7 +105,6 @@ class MainActivity : Activity() {
                 }
             }
         }
-    }
 
         @JavascriptInterface
         fun showPrivacyOptionsForm() {
