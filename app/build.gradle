@@ -31,11 +31,11 @@ android {
     buildTypes {
         debug {
             manifestPlaceholders = [admobAppId: 'ca-app-pub-3940256099942544~3347511713']
-            buildConfigField 'String', 'ADMOB_BANNER_ID', '\"ca-app-pub-3940256099942544/9214589741\"'
+            buildConfigField 'String', 'ADMOB_BANNER_ID', '"ca-app-pub-3940256099942544/9214589741"'
         }
         release {
             manifestPlaceholders = [admobAppId: 'ca-app-pub-5775721658619132~3542197639']
-            buildConfigField 'String', 'ADMOB_BANNER_ID', '\"ca-app-pub-5775721658619132/7587760566\"'
+            buildConfigField 'String', 'ADMOB_BANNER_ID', '"ca-app-pub-5775721658619132/7587760566"'
         }
     }
 }
