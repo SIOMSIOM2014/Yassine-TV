@@ -21,6 +21,9 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
+import com.google.android.ump.ConsentInformation
+import com.google.android.ump.ConsentRequestParameters
+import com.google.android.ump.UserMessagingPlatform
 import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
@@ -33,6 +36,7 @@ import java.util.concurrent.CompletableFuture
 class MainActivity : Activity() {
     private var web: WebView? = null
     private var bannerAd: AdView? = null
+    private var adsInitialized = false
     private var fullscreenView: View? = null
     private var fullscreenCallback: WebChromeClient.CustomViewCallback? = null
     private var previousOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
@@ -103,6 +107,17 @@ class MainActivity : Activity() {
         }
     }
 
+        @JavascriptInterface
+        fun showPrivacyOptionsForm() {
+            runOnUiThread {
+                val consent = UserMessagingPlatform.getConsentInformation(this@MainActivity)
+                if (consent.privacyOptionsRequirementStatus == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED) {
+                    UserMessagingPlatform.showPrivacyOptionsForm(this@MainActivity) { }
+                }
+            }
+        }
+    }
+
     private fun downloadPlaylist(source: String): String? {
         var connection: HttpURLConnection? = null
         return try {
@@ -110,7 +125,7 @@ class MainActivity : Activity() {
                 connectTimeout = 10000
                 readTimeout = 20000
                 instanceFollowRedirects = true
-                setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 YACINE-TV")
+                setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 IPTV-WORLD")
                 setRequestProperty("Accept", "application/x-mpegURL,text/plain,*/*")
                 setRequestProperty("Accept-Encoding", "identity")
             }
@@ -189,7 +204,7 @@ class MainActivity : Activity() {
 
         // Official Google sample banner ID: test ads only; replace only after policy/consent setup.
         val adView = AdView(this).apply {
-            adUnitId = "ca-app-pub-3940256099942544/9214589741"
+            adUnitId = BuildConfig.ADMOB_BANNER_ID
             val metrics = DisplayMetrics()
             @Suppress("DEPRECATION")
             windowManager.defaultDisplay.getMetrics(metrics)
@@ -198,6 +213,30 @@ class MainActivity : Activity() {
         }
         bannerAd = adView
         page.addView(adView, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        requestConsentAndLoadAds(adView)
+    }
+
+    private fun requestConsentAndLoadAds(adView: AdView) {
+        val consentInformation = UserMessagingPlatform.getConsentInformation(this)
+        val parameters = ConsentRequestParameters.Builder().build()
+        consentInformation.requestConsentInfoUpdate(
+            this,
+            parameters,
+            {
+                UserMessagingPlatform.loadAndShowConsentFormIfRequired(this) {
+                    initializeAdsIfAllowed(adView, consentInformation)
+                }
+            },
+            {
+                initializeAdsIfAllowed(adView, consentInformation)
+            },
+        )
+        initializeAdsIfAllowed(adView, consentInformation)
+    }
+
+    private fun initializeAdsIfAllowed(adView: AdView, consentInformation: ConsentInformation) {
+        if (adsInitialized || !consentInformation.canRequestAds()) return
+        adsInitialized = true
         MobileAds.initialize(this) {
             runOnUiThread { adView.loadAd(AdRequest.Builder().build()) }
         }
