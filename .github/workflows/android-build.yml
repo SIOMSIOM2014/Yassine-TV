@@ -1,7 +1,9 @@
-name: Android APK Build
+name: IPTV WORLD Android APK Build
 
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -42,7 +44,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Yassine-TV-debug-apk
+          name: IPTV-WORLD-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
